@@ -16,16 +16,23 @@ module.exports = {
     module: {
         rules: [
             {
-                test: /\.(jpe?g|png|gif)$/,
-                use: 'url-loader?limit=10000&name=./img/[name].[ext]'//小于10k转为base64 inline 图片
-            },//处理图片
-            {
                 test: /\.css$/,
                 use: ExtractTextPlugin.extract({
                     fallback: 'style-loader',
-                    use: 'css-loader?minimize=true'//带参数压缩css
+                    use: 'css-loader?minimize=true&-url'//带参数压缩css,加-url防止css内图片路径被转化
                 })
-            }//处理css
+            },//处理css
+            {
+                test: /\.(png|jpe?g|gif|svg)(\?.*)?$/,
+                loader: [
+                    'url-loader?limit=10000&name=./img/[name].[ext]',
+                    'image-webpack-loader?{optimizationLevel: 7, interlaced: false, pngquant:{quality: "65-80", speed: 4}, mozjpeg: {quality: 70}}'
+                ]
+            },//处理图片
+            {
+                test: /\.(woff|woff2|eot|ttf|svg)(\?.*)?$/,
+                loader: 'url-loader?importLoaders=1&limit=1000&name=./font/[name].[ext]'
+            },//处理font文件
         ]
     },
     plugins: [
@@ -34,9 +41,10 @@ module.exports = {
             compress: {
                 warnings: false
             },
-            except: ['$super','$','exports','require']//排除关键字
+            except: ['$super', '$', 'exports', 'require']//排除关键字
         }),
         new HtmlWebpackPlugin({                      //插入css/js标签生成最终html
+            favicon: './src/favicon.ico',
             filename: 'index.html',
             template: './src/index.html',
             hash: true,//静态资源后加hash
@@ -50,9 +58,9 @@ module.exports = {
         }),
     ],
     devServer: {
-        contentBase: './dist',//本地服务器所加载的页面所在的目录
-        colors: true,//终端中输出结果为彩色
+        contentBase: path.resolve(__dirname, 'dist'),//本地服务器所加载的页面所在的目录
         historyApiFallback: true,//不跳转
-        inline: true//实时刷新
+        inline: true,//实时刷新
+        port: 8080
     }
 }
